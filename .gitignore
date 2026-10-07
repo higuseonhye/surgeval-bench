@@ -1,13 +1,32 @@
+# Python cache
 __pycache__/
+*.py[cod]
+*$py.class
 .pytest_cache/
-.venv/
-venv/
-*.pyc
 
-# Licensed surgical video and extracted frames stay on disk, not in git.
-data/cholec80/
-data/frames/
+# Environments and secrets
+.venv/
+env/
+venv/
+ENV/
+.env
+.env.*
+!.env.example
+
+# Local datasets and surgical media. Synthetic fixtures in data/examples stay tracked.
+data/*
+!data/examples/
+!data/examples/**
 frames/
 *.mp4
+*.avi
+*.png
+*.jpg
+*.jpeg
 *.tar
 *.tar.gz
+
+# IDE
+.vscode/
+.idea/
+*.swp

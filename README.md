@@ -1,52 +1,76 @@
 # SurgEval-Bench
 
-담낭절제술 프레임에 대한 시각-언어 질문을 채점하는 도구다. 모델 학습 코드는 없고, 문항과 예측을 받아 정확도, 무응답, 실패 유형을 계산한다.
+Evaluation harness for visual questions on laparoscopic cholecystectomy frames. It scores phase, tool, grounding, and safety items, and it tags wrong answers with review labels. It does not train a model, call an API, or control a robot.
 
-Cholec80 영상은 포함하지 않는다. CAMMA 공개본은 CC BY-NC-SA 4.0이라 저장소에 프레임을 넣지 않는다. 라벨 파일을 이미 가지고 있으면 로컬에서 문항만 만들 수 있다.
+The demo runs with no video and no API key. `reports/demo_report.md` is a score of 11 synthetic predictions (strict accuracy 45.5%). That number is a pipeline check, not a VLM result.
 
-## 실행
+## Design
+
+Cholec80 labels support three questions: surgical phase, tool presence, and tool count. Asking all seven tools on every frame makes "absent" the majority answer, so accuracy rises while rare tools are missed. The builder asks every tool that is present and one absent tool per frame. Scores include accuracy and macro-F1.
+
+Refusals (`null`, `abstain`, `unknown`, `unsure`) are counted separately from wrong answers.
+
+Spatial boxes and bleeding are not in Cholec80. Those items are scored only when the file supplies a box or a clinical label.
+
+Wrong answers can receive these tags. Occlusion and ambiguity are applied only when the item already carries that flag. The harness does not detect smoke or blood in pixels.
+
+| Tag | When it is applied |
+| --- | --- |
+| `overconfidence_hallucination` | Wrong, and confidence is at least 0.85 |
+| `visual_occlusion` | Wrong, and `occlusion` is `smoke`, `blood`, or `fog` |
+| `anatomical_ambiguity` | Wrong, and `ambiguity` is set |
+| `temporal_inconsistency` | Wrong phase whose predicted index jumps by more than one phase from the previous prediction on the same video |
+| `unclassified_error` | Wrong, with none of the conditions above |
+
+Surgical-VQA (Seenivasan et al., MICCAI 2022) reports classification accuracy 0.898 on Cholec80-VQA. That figure is closed-set phase and tool classification. It is not a grounding or bleeding score.
+
+A score from this harness is not evidence for clinical use.
+
+## Quick start
 
 ```bash
-py -m pip install -r requirements.txt
-py -m pytest
-py -m surgeval demo
+git clone https://github.com/higuseonhye/surgeval-bench.git
+cd surgeval-bench
+python -m pip install -r requirements.txt
+python -m pytest
+python -m surgeval demo
 ```
 
-`reports/demo_report.md`는 `data/examples`의 합성 예측을 채점한 결과다. VLM을 돌린 점수가 아니다.
+## Local Cholec80 annotations
 
-## 로컬 라벨로 문항 만들기
-
-Cholec80의 `videoXX-phase.txt`, `videoXX-tool.txt`가 있을 때:
+Phase and tool text files are enough. Do not commit the videos. Cholec80 is CC BY-NC-SA 4.0 (Twinanda et al., IEEE TMI 2016): https://camma.unistra.fr/datasets/
 
 ```bash
-py -m surgeval build --phase video01-phase.txt --tool video01-tool.txt --video video01 --stride 1 --out items.jsonl
+python -m surgeval build --phase video01-phase.txt --tool video01-tool.txt --video video01 --stride 1 --out items.jsonl
+python -m surgeval eval --items items.jsonl --preds preds.jsonl --out reports/report.md
 ```
 
-`--stride`는 기구 라벨 행 간격이다. 공개본의 기구 라벨은 이미 1초 간격이라, `--stride 25`는 약 25초마다 한 프레임이다.
+`--stride` steps through tool-annotation rows. Those rows are already one per second, so `--stride 25` keeps about one frame every 25 seconds.
 
-예측 파일은 같은 `id`를 가진 JSONL이다.
+Predictions use the same `id`. A missing answer is `null` or `"abstain"`.
 
 ```json
 {"id": "video01_f000000_phase", "pred": "Preparation", "confidence": 0.8}
 ```
 
-모르겠으면 `pred`를 `null` 또는 `"abstain"`으로 둔다. 무응답은 오답과 따로 센다.
+## Layout
 
-```bash
-py -m surgeval eval --items items.jsonl --preds preds.jsonl --out reports/report.md
+```text
+surgeval/cholec80.py        build items from phase and tool files
+surgeval/metrics.py         accuracy, abstention, macro-F1, IoU
+surgeval/failure_modes.py   review tags for wrong answers
+surgeval/evaluate.py        demo, build, and eval commands
+surgeval/prompts.py         prompt text for a later VLM run
+data/examples/              synthetic items used by the demo and tests
+docs/01_task_definition.md  tasks, labels, and metrics
+docs/TECHNICAL_REPORT.md    method note
+reports/demo_report.md      synthetic score report
 ```
 
-## 문서
+## License
 
-- `docs/01_task_definition.md` — 문항, 정답 출처, 지표
-- `docs/TECHNICAL_REPORT.md` — 포트폴리오용 방법 설명
+The code is MIT. See [LICENSE](LICENSE).
 
-## 라벨이 커버하는 범위
+Cholec80 videos and frames are not in this repository. If you obtain them, their CC BY-NC-SA 4.0 terms still apply. This MIT license does not relicense that dataset.
 
-| 태스크 | 정답 출처 |
-| --- | --- |
-| 수술 단계, 기구 존재, 기구 개수 | Cholec80 단계·기구 라벨 |
-| 위치 지정 | 상자 좌표가 있는 문항만. Cholec80에는 없다 |
-| 출혈 등 안전 확인 | 별도 임상 표정만. Cholec80에는 없다 |
-
-점수는 임상 사용 근거가 아니다.
+Seonhye Gu · https://www.linkedin.com/in/seonhyegu
