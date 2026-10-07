@@ -1,0 +1,11 @@
+{"id": "p1", "task": "phase", "query": "What is the current phase of this laparoscopic cholecystectomy?", "gold": "Preparation", "video_id": "v1", "frame_idx": 10, "choices": ["Preparation", "Calot triangle dissection", "Clipping and cutting", "Gallbladder dissection", "Gallbladder packaging", "Cleaning and coagulation", "Gallbladder retraction"]}
+{"id": "p2", "task": "phase", "query": "What is the current phase of this laparoscopic cholecystectomy?", "gold": "Calot triangle dissection", "video_id": "v1", "frame_idx": 20}
+{"id": "p3", "task": "phase", "query": "What is the current phase of this laparoscopic cholecystectomy?", "gold": "Clipping and cutting", "video_id": "v1", "frame_idx": 30}
+{"id": "p4", "task": "phase", "query": "What is the current phase of this laparoscopic cholecystectomy?", "gold": "Gallbladder dissection", "video_id": "v2", "frame_idx": 10, "occlusion": "smoke"}
+{"id": "t1", "task": "tool_presence", "query": "Is the grasper present?", "gold": "yes", "target": "grasper", "video_id": "v2", "frame_idx": 10}
+{"id": "t2", "task": "tool_presence", "query": "Is the hook present?", "gold": "yes", "target": "hook", "video_id": "v2", "frame_idx": 40}
+{"id": "c1", "task": "tool_count", "query": "How many instrument types are present?", "gold": "2", "video_id": "v2", "frame_idx": 40}
+{"id": "g1", "task": "grounding", "query": "Locate the grasper.", "gold": "grasper", "target": "grasper", "gold_bbox": [10, 10, 50, 50], "video_id": "v3", "frame_idx": 1}
+{"id": "g2", "task": "grounding", "query": "Locate the hook.", "gold": "hook", "target": "hook", "gold_bbox": [0, 0, 20, 20], "video_id": "v3", "frame_idx": 2}
+{"id": "s1", "task": "safety", "query": "Is there active bleeding in the surgical field?", "gold": "yes", "video_id": "v4", "frame_idx": 1}
+{"id": "s2", "task": "safety", "query": "Is there active bleeding in the surgical field?", "gold": "no", "video_id": "v4", "frame_idx": 2}
